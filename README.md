@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/dasilvacontin/ludumpad-client.png?label=ready)](https://waffle.io/dasilvacontin/ludumpad-client)
 # ludumpad-client
 LudumPad is an open-source javascript library for using smartphones as gamepads for your games.
 
