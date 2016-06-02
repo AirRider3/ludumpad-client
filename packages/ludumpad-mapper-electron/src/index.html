@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <title>LudumPad Mapper</title>
+  <style>
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+      font-size: 18px;
+      background: #6b8bef;
+    }
+
+    body {
+      margin: 50px;
+    }
+
+    h1, h2 {
+      font-size: 18px;
+    }
+
+    small {
+      font-size: 12px;
+    }
+
+    #qr-container {
+      position: absolute;
+      top: 50px;
+      right: 50px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      width: 200px;
+      text-align: right;
+    }
+
+  </style>
+</head>
+<body>
+  <h1 id="title-label"># LudumPad Mapper</h1>
+  <p id="server-data"></p>
+  <div id="qr-container">
+    <div id="qr"></div>
+    <small><a href="https://support.apple.com/kb/PH18754">OSX Handoff</a> is available</small>
+  </div>
+  <script>
+    const ldMapper = require('ludumpad-mapper').default
+    const beautify = require("json-beautify")
+    const { ipcRenderer, shell } = require('electron')
+    const qr = require('qr-image')
+
+    const server = ldMapper({
+      name: 'LudumPad Mapper Electron',
+      version: require('../package.json').version
+    })
+    ipcRenderer.send('ludumpad-server:start', server.address)
+
+    const qrSvg = qr.imageSync(server.address, {
+      margin: 0,
+      type: 'svg'
+    })
+    const qrDOM = document.getElementById('qr')
+    qrDOM.innerHTML = qrSvg
+    setTimeout(function () {
+      document.getElementById('qr-container').style.opacity = 1
+    }, 0)
+
+    const titleLabel = document.getElementById('title-label')
+    titleLabel.innerHTML = `# LudumPad Mapper v${server.version}`
+
+    const dataDOM = document.getElementById('server-data')
+    function renderControllerInput () {
+      requestAnimationFrame(renderControllerInput)
+      var inputs = server.controllers
+        .filter(controller => controller)
+        .map(controller => controller.input)
+      const view = beautify({
+        address: server.address,
+        controllers: inputs
+      }, null, 2, 40)
+      dataDOM.innerHTML = view.replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/\s/g, '&nbsp;')
+    }
+    requestAnimationFrame(renderControllerInput)
+
+    // open browser for click on links
+    function handleLinkClick (evt) {
+      evt.preventDefault()
+      shell.openExternal(this.href)
+    }
+    Array.from(document.getElementsByTagName('a')).forEach(function (a) {
+      a.addEventListener('click', handleLinkClick)
+    })
+  </script>
+</body>
